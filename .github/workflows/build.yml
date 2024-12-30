@@ -1,0 +1,42 @@
+name: VTK
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ windows-latest ]
+    steps:
+      - name: Cloning vcpkg...
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/vcpkg
+          path: vcpkg
+
+      - name: Bootstrap vcpkg on ${{ runner.os }}...
+        run: |
+          pushd vcpkg
+          .\bootstrap-vcpkg.bat
+          popd
+
+      - name: Building VTK
+        run: |
+          pushd vcpkg
+          vcpkg install vtk
+          vcpkg export --zip vtk --output-dir=.\vtk-export
+          popd
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: vtk-x64-windows
+          path: vcpkg/vtk-export/*.zip
